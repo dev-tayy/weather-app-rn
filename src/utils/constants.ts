@@ -6,6 +6,7 @@ export const AppColors = {
   greyText: '#A09FB1',
   yellow: '#FFEC65',
   blue: '#3C47E9',
+  border: '#616475',
 };
 
 export const AppImages = {
