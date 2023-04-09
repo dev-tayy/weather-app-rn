@@ -51,19 +51,21 @@ function App(): JSX.Element {
         </View>
       </ScrollView>
       {modalVisible && <View style={styles.shadow} />}
-      <BottomSheet
-        ref={bottomSheetRef}
-        detached={true}
-        index={0}
-        backgroundComponent={null}
-        handleComponent={null}
-        style={[styles.modalSheet]}
-        snapPoints={['85']}>
-        <BottomSheetContent
-          bottomSheetRef={bottomSheetRef}
-          setModalVisible={setModalVisible}
-        />
-      </BottomSheet>
+      {modalVisible && (
+        <BottomSheet
+          ref={bottomSheetRef}
+          detached={true}
+          index={0}
+          backgroundComponent={null}
+          handleComponent={null}
+          style={[styles.modalSheet]}
+          snapPoints={['85']}>
+          <BottomSheetContent
+            bottomSheetRef={bottomSheetRef}
+            setModalVisible={setModalVisible}
+          />
+        </BottomSheet>
+      )}
     </GestureHandlerRootView>
   );
 }

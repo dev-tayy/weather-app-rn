@@ -54,6 +54,7 @@ export function HighlightTile({
               color={AppColors.yellow}
               unfilledColor={AppColors.white}
               width={229}
+              borderColor="transparent"
             />
             <Spacer height={3} />
             <Text style={[styles.progressText]}>%</Text>
