@@ -5,8 +5,9 @@
  * @format
  */
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, {useRef, useState} from 'react';
 import {AppColors, AppImages} from './src/utils/constants';
+import BottomSheet from '@gorhom/bottom-sheet';
 import {
   SafeAreaView,
   ScrollView,
@@ -18,8 +19,14 @@ import {
   Image,
 } from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {BottomSheetContent} from './src/components/modal';
 
 function App(): JSX.Element {
+  // ref
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const [modalVisible, setModalVisible] = useState(false);
+
   return (
     <GestureHandlerRootView style={{flex: styles.background.flex}}>
       <SafeAreaView
@@ -29,6 +36,7 @@ function App(): JSX.Element {
           padding: styles.background.paddingHorizontal,
         }}>
         <StatusBar barStyle={'light-content'} />
+
         <ScrollView contentInsetAdjustmentBehavior="automatic">
           <View style={[styles.background]}>
             <Image source={AppImages.cloud} style={[styles.cloudImage, {}]} />
@@ -36,7 +44,10 @@ function App(): JSX.Element {
               <TouchableOpacity
                 style={styles.searchButton}
                 activeOpacity={0.7}
-                onPress={() => console.log('')}>
+                onPress={() => {
+                  setModalVisible(true);
+                  bottomSheetRef.current?.expand();
+                }}>
                 <Text style={[styles.mainText]}>Search for a place</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -106,6 +117,24 @@ function App(): JSX.Element {
             </View>
           </View>
         </ScrollView>
+        {modalVisible && <View style={styles.shadow} />}
+        <BottomSheet
+          ref={bottomSheetRef}
+          detached={true}
+          index={0}
+          backgroundComponent={null}
+          handleComponent={null}
+          backgroundStyle={{
+            backgroundColor: AppColors.white,
+            borderRadius: 10,
+          }}
+          style={[styles.modalSheet]}
+          snapPoints={['80']}>
+          <BottomSheetContent
+            bottomSheetRef={bottomSheetRef}
+            setModalVisible={setModalVisible}
+          />
+        </BottomSheet>
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -118,7 +147,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 12,
     paddingTop: 16,
-    position: 'relative',
   },
   searchButton: {
     backgroundColor: AppColors.grey,
@@ -145,14 +173,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  bottomSheet: {
-    color: AppColors.darkPrimary,
-    backgroundColor: AppColors.grey,
-    overlayColor: AppColors.white,
-    tintColor: AppColors.primary,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-  },
+
   backdrop: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
@@ -187,6 +208,21 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 50,
     marginBottom: -20,
+  },
+  modalSheet: {
+    backgroundColor: AppColors.primary,
+    color: AppColors.primary,
+    borderRadius: 20,
+    paddingTop: 17,
+    paddingHorizontal: 13,
+  },
+  shadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 100,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
 });
 
