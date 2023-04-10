@@ -6,8 +6,8 @@ import React from 'react';
 export type SubWeatherTileProps = {
   image: string;
   title: string;
-  initialTemp: string;
-  secondTemp: string;
+  initialTemp: number;
+  secondTemp: number;
 };
 
 export function SubWeatherTile({
@@ -26,7 +26,7 @@ export function SubWeatherTile({
             uri: image,
           }}
           style={styles.image}
-          resizeMode="cover"
+          resizeMode="contain"
         />
         <Spacer height={31} />
         <View style={styles.direction}>
@@ -50,9 +50,10 @@ export function SubWeatherTile({
 const styles = StyleSheet.create({
   background: {
     backgroundColor: AppColors.primary,
-    paddingVertical: 20,
-    paddingHorizontal: 25,
+    height: 177,
+    width: 120,
     alignItems: 'center',
+    paddingVertical: 18,
   },
   tempText: {
     color: AppColors.white,
@@ -67,5 +68,5 @@ const styles = StyleSheet.create({
   direction: {
     flexDirection: 'row',
   },
-  outerPadding: {paddingRight: 20, paddingVertical: 20},
+  outerPadding: {paddingHorizontal: 20, paddingVertical: 20},
 });

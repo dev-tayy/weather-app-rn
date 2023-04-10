@@ -31,6 +31,7 @@ function App(): JSX.Element {
         backgroundColor={AppColors.primary}
       />
       <ScrollView
+        endFillColor={AppColors.darkPrimary}
         contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"
         overScrollMode="never"
@@ -51,10 +52,10 @@ function App(): JSX.Element {
         <View style={styles.darkBackground}>
           <Spacer height={52} />
           {/* sub weather arena */}
-          <SubWeather />
+          <SubWeather forecastWeather={weather?.days.slice(0, 5) ?? []} />
           <Spacer height={51} />
           {/* today highlight arena */}
-          <TodayHighlight />
+          <TodayHighlight highlights={weather?.currentConditions} />
           <Spacer height={130} />
         </View>
       </ScrollView>

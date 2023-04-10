@@ -4,30 +4,35 @@ import {HighlightTile, HighlightTileProps} from '../components/highlight.tile';
 import {Spacer} from '../components/spacer';
 import {AppColors} from '../utils/constants';
 import React from 'react';
+import {CurrentConditions} from '../models/weather.model';
 
-export function TodayHighlight(): JSX.Element {
+type TodayHighlightProps = {
+  highlights?: CurrentConditions;
+};
+
+export function TodayHighlight({highlights}: TodayHighlightProps): JSX.Element {
   const highlightArr: HighlightTileProps[] = [
     {
       title: 'Wind status',
-      value: 7,
+      value: highlights?.windspeed ?? 0,
       suffix: 'mph',
       type: 'wind-status',
     },
     {
       title: 'Humidity',
-      value: 84,
+      value: highlights?.humidity ?? 0,
       suffix: '%',
       type: 'humidity',
     },
     {
       title: 'Visibility',
-      value: 6.4,
+      value: highlights?.visibility ?? 0,
       suffix: 'miles',
       type: 'default',
     },
     {
       title: 'Air Pressure',
-      value: 998,
+      value: highlights?.pressure ?? 0,
       suffix: 'mb',
       type: 'default',
     },
