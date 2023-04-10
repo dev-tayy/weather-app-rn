@@ -1,23 +1,38 @@
 import {TouchableOpacity} from '@gorhom/bottom-sheet';
 import {BottomSheetMethods} from '@gorhom/bottom-sheet/lib/typescript/types';
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TextInput, Keyboard} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Keyboard,
+  ActivityIndicator,
+  FlatList,
+} from 'react-native';
 import {AppColors} from '../utils/constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Spacer} from './spacer';
 import {LocationTile} from './location.tile';
+import {fetchWeather} from '../repositories/weather.repository';
+import {Weather} from '../models/weather.model';
 
 export type BottomSheetContentProps = {
   bottomSheetRef: React.RefObject<BottomSheetMethods>;
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  setWeatherData?: React.Dispatch<React.SetStateAction<Weather | undefined>>;
 };
 
 export function BottomSheetContent({
   bottomSheetRef,
   setModalVisible,
+  setWeatherData,
 }: BottomSheetContentProps): JSX.Element {
   const [value, onChangeText] = useState<string | undefined>();
   const [showPlaceHolder, setPlaceHolderValue] = useState(true);
+  const [isLoading, setLoading] = useState(false);
+  const [error, setError] = useState<String | null>();
+  const [weather, setWeather] = useState<Weather>();
 
   const handleTextChange = (text: string) => {
     onChangeText(text);
@@ -28,7 +43,11 @@ export function BottomSheetContent({
     bottomSheetRef.current?.close();
     setModalVisible(false);
     Keyboard.dismiss();
+    if (weather && setWeatherData) {
+      setWeatherData(weather);
+    }
   };
+
   return (
     <View style={{}}>
       <TouchableOpacity
@@ -59,12 +78,60 @@ export function BottomSheetContent({
             </View>
           )}
         </View>
-        <TouchableOpacity activeOpacity={0.6} style={styles.searchBtn}>
+        <TouchableOpacity
+          activeOpacity={0.6}
+          style={styles.searchBtn}
+          onPress={async () => {
+            if (value) {
+              setLoading(true);
+              const result = await fetchWeather(value)();
+
+              switch (result._tag) {
+                case 'Left':
+                  setError(result.left.message);
+                  break;
+
+                case 'Right':
+                  setError(null);
+                  setWeather(result.right);
+                  break;
+              }
+
+              setLoading(false);
+            }
+          }}>
           <Text style={styles.searchBtnText}>Search</Text>
         </TouchableOpacity>
       </View>
       <Spacer height={38} />
-      <LocationTile location={'London'} onPressed={handleBottomSheetClose} />
+      {error && !isLoading && (
+        <View style={styles.displayColumn}>
+          <Icon name="info" size={23} color={AppColors.greyText} />
+          <Spacer height={5} />
+          <Text style={styles.displayText}>{error}</Text>
+        </View>
+      )}
+      {isLoading && (
+        <View style={styles.displayColumn}>
+          <ActivityIndicator size={'small'} style={styles.loader} />
+          <Spacer height={15} />
+          <Text style={styles.displayText}>Loading...</Text>
+        </View>
+      )}
+      {weather && !isLoading && !error && (
+        <View>
+          <FlatList
+            data={[weather]}
+            scrollEnabled={false}
+            renderItem={_ => (
+              <LocationTile
+                location={weather.address}
+                onPressed={handleBottomSheetClose}
+              />
+            )}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -104,4 +171,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
+  displayColumn: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loader: {height: 5, width: 5},
+  displayText: {color: AppColors.white, textAlign: 'center'},
 });

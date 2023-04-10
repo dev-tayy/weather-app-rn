@@ -4,13 +4,25 @@ import {AppColors, AppImages} from '../utils/constants';
 import React from 'react';
 import metrics from '../utils/metrics';
 import {BottomSheetContentProps} from '../components/modal';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-type WeatherHomeProps = BottomSheetContentProps & {};
+type WeatherHomeProps = BottomSheetContentProps & {
+  celsius: number;
+  description: string;
+  location: string;
+  image: string;
+};
 
 export function WeatherHome({
   setModalVisible,
   bottomSheetRef,
+  celsius,
+  location,
+  image,
+  description,
 }: WeatherHomeProps): JSX.Element {
+  console.log(image);
+
   return (
     <View style={[styles.background]}>
       <Image source={AppImages.cloud} style={[styles.cloudImage, {}]} />
@@ -28,19 +40,19 @@ export function WeatherHome({
           style={styles.gpsButton}
           activeOpacity={0.7}
           onPress={() => console.log('')}>
-          <Text style={[styles.mainText]}>SE</Text>
+          <Icon name="navigation" size={18} color={AppColors.white} />
         </TouchableOpacity>
       </View>
       <View>
         <Image
           source={{
-            uri: AppImages.tempCloud,
+            uri: image,
           }}
           style={styles.currentWeatherImage}
-          resizeMode="cover"
+          resizeMode="contain"
         />
         <View style={styles.tempRow}>
-          <Text style={styles.weatherText}>15</Text>
+          <Text style={styles.weatherText}>{celsius}</Text>
           <Text style={styles.celciusText}>℃</Text>
         </View>
         <Text
@@ -51,7 +63,7 @@ export function WeatherHome({
               alignSelf: styles.gpsButton.alignSelf,
             },
           ]}>
-          Shower
+          {description}
         </Text>
       </View>
       <View style={styles.tempRow}>
@@ -86,7 +98,7 @@ export function WeatherHome({
             styles.celciusText,
             {fontSize: styles.mainText.fontSize + 2},
           ]}>
-          Helsinki
+          {location}
         </Text>
       </View>
     </View>
@@ -148,6 +160,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Raleway',
     fontWeight: '300',
     alignSelf: 'center',
+    textAlign: 'center',
   },
   tempRow: {
     justifyContent: 'center',
@@ -158,6 +171,8 @@ const styles = StyleSheet.create({
   currentWeatherImage: {
     width: 150,
     height: 174,
+
+    resizeMode: 'contain',
     alignSelf: 'center',
     marginTop: 50,
     marginBottom: -20,
