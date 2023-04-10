@@ -19,3 +19,12 @@ export const AppImages = {
 export function getWeatherIcon(condition: ConditionType): string {
   return `https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/4th%20Set%20-%20Color/${condition}.png`;
 }
+
+export enum ErrorMessages {
+  Generic = 'Hmm... we hit a snag, please try again later!',
+}
+
+export type LatLng = {
+  lat: number;
+  long: number;
+};

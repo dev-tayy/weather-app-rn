@@ -5,10 +5,16 @@
  * @format
  */
 import 'react-native-gesture-handler';
-import React, {useRef, useState} from 'react';
-import {AppColors, getWeatherIcon} from './src/utils/constants';
+import React, {useRef, useState, useMemo} from 'react';
+import {AppColors, LatLng, getWeatherIcon} from './src/utils/constants';
 import BottomSheet from '@gorhom/bottom-sheet';
-import {ScrollView, StatusBar, StyleSheet, View} from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import metrics from './src/utils/metrics';
 import {Spacer} from './src/components/spacer';
@@ -17,11 +23,89 @@ import {SubWeather} from './src/screens/sub.weather';
 import {TodayHighlight} from './src/screens/highlight';
 import {WeatherHome} from './src/screens/weather';
 import {ConditionType, Weather} from './src/models/weather.model';
+import {requestLocationPermission} from './src/utils/permission.handler';
+import {
+  fetchWeather,
+  reverseGeocoding,
+} from './src/repositories/weather.repository';
+import Geolocation from 'react-native-geolocation-service';
 
 function App(): JSX.Element {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [weather, setWeather] = useState<Weather>();
+  const [location, setLocation] = useState<LatLng>();
+  const [resolvedAddress, setResolvedAddress] = useState<string>();
+  const [isLoading, setLoading] = useState(true);
+
+  const handleLocation = async () => {
+    const result = await requestLocationPermission()();
+    if (result._tag === 'Right') {
+      const status = result.right;
+      if (status === 'granted') {
+        Geolocation.getCurrentPosition(
+          position => {
+            setLocation({
+              lat: position.coords.latitude,
+              long: position.coords.longitude,
+            });
+          },
+          error => {
+            //set default fallback location to Lagos, Nigeria
+            setLocation({
+              lat: 6.465422,
+              long: 3.406448,
+            });
+            console.log(error);
+          },
+          {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+        );
+      } else {
+        console.log(status);
+      }
+    }
+  };
+
+  const handleWeatherData = async () => {
+    if (location) {
+      const result = await fetchWeather(`${location.lat},${location.long}`)();
+      switch (result._tag) {
+        case 'Left':
+          console.log(result.left.message);
+          // setError(result.left.message);
+          break;
+        case 'Right':
+          // setError(null);
+          setWeather(result.right);
+          break;
+      }
+    }
+  };
+
+  const handleReverseGeocoding = async () => {
+    if (location) {
+      const result = await reverseGeocoding(location)();
+      if (result._tag === 'Left') {
+        console.log(result.left.message);
+        // setError(result.left.message);
+      } else {
+        setResolvedAddress(result.right);
+      }
+    }
+  };
+
+  useMemo(() => {
+    Promise.all([
+      handleLocation(),
+      handleReverseGeocoding(),
+      handleWeatherData(),
+    ]);
+    setLoading(false);
+    console.log('====================================');
+    console.log('WHY ARE YOU RE-RENDERING HMM?');
+    console.log('====================================');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <GestureHandlerRootView style={{flex: styles.background.flex}}>
@@ -42,12 +126,24 @@ function App(): JSX.Element {
         <WeatherHome
           celsius={weather?.currentConditions.temp ?? 0}
           description={weather?.currentConditions.conditions ?? 'N/A'}
-          location={weather?.resolvedAddress ?? 'No location detected'}
+          location={
+            (Number(weather?.resolvedAddress[0])
+              ? resolvedAddress
+              : weather?.resolvedAddress) ?? 'No location detected'
+          }
           image={getWeatherIcon(
             weather?.currentConditions.icon ?? ConditionType.ClearDay,
           )}
           bottomSheetRef={bottomSheetRef}
           setModalVisible={setModalVisible}
+          handleLocationTap={() => {
+            Promise.all([
+              handleLocation(),
+              handleReverseGeocoding(),
+              handleWeatherData(),
+            ]);
+            setLoading(false);
+          }}
         />
         <View style={styles.darkBackground}>
           <Spacer height={52} />
@@ -60,6 +156,11 @@ function App(): JSX.Element {
         </View>
       </ScrollView>
       {modalVisible && <View style={styles.shadow} />}
+      {isLoading && (
+        <View style={styles.shadow}>
+          <ActivityIndicator size={'small'} />
+        </View>
+      )}
       {modalVisible && (
         <BottomSheet
           ref={bottomSheetRef}

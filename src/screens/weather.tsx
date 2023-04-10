@@ -11,6 +11,7 @@ type WeatherHomeProps = BottomSheetContentProps & {
   description: string;
   location: string;
   image: string;
+  handleLocationTap: () => void;
 };
 
 export function WeatherHome({
@@ -20,9 +21,8 @@ export function WeatherHome({
   location,
   image,
   description,
+  handleLocationTap,
 }: WeatherHomeProps): JSX.Element {
-  console.log(image);
-
   return (
     <View style={[styles.background]}>
       <Image source={AppImages.cloud} style={[styles.cloudImage, {}]} />
@@ -39,7 +39,7 @@ export function WeatherHome({
         <TouchableOpacity
           style={styles.gpsButton}
           activeOpacity={0.7}
-          onPress={() => console.log('')}>
+          onPress={handleLocationTap}>
           <Icon name="navigation" size={18} color={AppColors.white} />
         </TouchableOpacity>
       </View>
