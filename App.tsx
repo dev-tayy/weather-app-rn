@@ -24,6 +24,7 @@ import {TodayHighlight} from './src/screens/highlight';
 import {WeatherHome} from './src/screens/weather';
 import {ConditionType, Weather} from './src/models/weather.model';
 import {fetchWeatherOnStart} from './src/repositories/weather.repository';
+import Snackbar from 'react-native-snackbar';
 
 function App(): JSX.Element {
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -38,6 +39,13 @@ function App(): JSX.Element {
     switch (result._tag) {
       case 'Left':
         setLoading(false);
+        Snackbar.show({
+          text: result.left.message,
+          duration: Snackbar.LENGTH_SHORT,
+          numberOfLines: 2,
+          textColor: AppColors.white,
+          backgroundColor: 'red',
+        });
         break;
       case 'Right':
         setLoading(false);

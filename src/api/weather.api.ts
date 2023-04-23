@@ -7,6 +7,7 @@ import {LatLng} from '../utils/constants';
 const axiosInstance = axios.create({
   baseURL:
     'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/',
+  timeout: 5000,
 });
 
 function getBaseUrl(location: string) {
@@ -16,7 +17,7 @@ function getBaseUrl(location: string) {
 export function fetchWeatherAPI(location: string): TE.TaskEither<Error, any> {
   return TE.tryCatch(
     () => axiosInstance.get(getBaseUrl(location)),
-    (reason: any) => new Error(reason.response.data),
+    (reason: any) => new Error(handleAxiosError(reason, ErrorType.WEATHER_API)),
   );
 }
 
@@ -29,6 +30,27 @@ export function reverseGeocodingAPI({
       axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${long}&key=${PrivateKeys.GOOGLE_API}`,
       ),
-    (reason: any) => new Error(reason.response.data),
+    (reason: any) => new Error(handleAxiosError(reason, ErrorType.GOOGLE_API)),
   );
+}
+
+function handleAxiosError(reason: any, type: ErrorType): string {
+  let error = '';
+  if (reason.response) {
+    if (type === ErrorType.GOOGLE_API) {
+      error = reason.response.data.error_message;
+    } else {
+      error = reason.response.data;
+    }
+  } else if (reason.message) {
+    error = reason.message;
+  } else {
+    error = reason;
+  }
+  return error;
+}
+
+enum ErrorType {
+  GOOGLE_API = 'google-api',
+  WEATHER_API = 'weather-api',
 }
