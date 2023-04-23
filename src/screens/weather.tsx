@@ -171,7 +171,6 @@ const styles = StyleSheet.create({
   currentWeatherImage: {
     width: 150,
     height: 174,
-
     resizeMode: 'contain',
     alignSelf: 'center',
     marginTop: 50,

@@ -5,8 +5,8 @@
  * @format
  */
 import 'react-native-gesture-handler';
-import React, {useRef, useState, useMemo} from 'react';
-import {AppColors, LatLng, getWeatherIcon} from './src/utils/constants';
+import React, {useRef, useState, useEffect} from 'react';
+import {AppColors, getWeatherIcon} from './src/utils/constants';
 import BottomSheet from '@gorhom/bottom-sheet';
 import {
   ActivityIndicator,
@@ -23,88 +23,32 @@ import {SubWeather} from './src/screens/sub.weather';
 import {TodayHighlight} from './src/screens/highlight';
 import {WeatherHome} from './src/screens/weather';
 import {ConditionType, Weather} from './src/models/weather.model';
-import {requestLocationPermission} from './src/utils/permission.handler';
-import {
-  fetchWeather,
-  reverseGeocoding,
-} from './src/repositories/weather.repository';
-import Geolocation from 'react-native-geolocation-service';
+import {fetchWeatherOnStart} from './src/repositories/weather.repository';
 
 function App(): JSX.Element {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [weather, setWeather] = useState<Weather>();
-  const [location, setLocation] = useState<LatLng>();
   const [resolvedAddress, setResolvedAddress] = useState<string>();
-  const [isLoading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(false);
 
-  const handleLocation = async () => {
-    const result = await requestLocationPermission()();
-    if (result._tag === 'Right') {
-      const status = result.right;
-      if (status === 'granted') {
-        Geolocation.getCurrentPosition(
-          position => {
-            setLocation({
-              lat: position.coords.latitude,
-              long: position.coords.longitude,
-            });
-          },
-          error => {
-            //set default fallback location to Lagos, Nigeria
-            setLocation({
-              lat: 6.465422,
-              long: 3.406448,
-            });
-            console.log(error);
-          },
-          {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-        );
-      } else {
-        console.log(status);
-      }
+  async function fetchWeather() {
+    setLoading(true);
+    let result = await fetchWeatherOnStart()();
+    switch (result._tag) {
+      case 'Left':
+        setLoading(false);
+        break;
+      case 'Right':
+        setLoading(false);
+        setWeather(result.right.weather);
+        setResolvedAddress(result.right.address);
+        break;
     }
-  };
+  }
 
-  const handleWeatherData = async () => {
-    if (location) {
-      const result = await fetchWeather(`${location.lat},${location.long}`)();
-      switch (result._tag) {
-        case 'Left':
-          console.log(result.left.message);
-          // setError(result.left.message);
-          break;
-        case 'Right':
-          // setError(null);
-          setWeather(result.right);
-          break;
-      }
-    }
-  };
-
-  const handleReverseGeocoding = async () => {
-    if (location) {
-      const result = await reverseGeocoding(location)();
-      if (result._tag === 'Left') {
-        console.log(result.left.message);
-        // setError(result.left.message);
-      } else {
-        setResolvedAddress(result.right);
-      }
-    }
-  };
-
-  useMemo(() => {
-    Promise.all([
-      handleLocation(),
-      handleReverseGeocoding(),
-      handleWeatherData(),
-    ]);
-    setLoading(false);
-    console.log('====================================');
-    console.log('WHY ARE YOU RE-RENDERING HMM?');
-    console.log('====================================');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchWeather();
   }, []);
 
   return (
@@ -123,6 +67,7 @@ function App(): JSX.Element {
           backgroundColor: AppColors.primary,
         }}>
         {/*  weather home arena */}
+
         <WeatherHome
           celsius={weather?.currentConditions.temp ?? 0}
           description={weather?.currentConditions.conditions ?? 'N/A'}
@@ -136,13 +81,8 @@ function App(): JSX.Element {
           )}
           bottomSheetRef={bottomSheetRef}
           setModalVisible={setModalVisible}
-          handleLocationTap={() => {
-            Promise.all([
-              handleLocation(),
-              handleReverseGeocoding(),
-              handleWeatherData(),
-            ]);
-            setLoading(false);
+          handleLocationTap={async () => {
+            await fetchWeather();
           }}
         />
         <View style={styles.darkBackground}>
@@ -155,12 +95,12 @@ function App(): JSX.Element {
           <Spacer height={130} />
         </View>
       </ScrollView>
-      {modalVisible && <View style={styles.shadow} />}
       {isLoading && (
-        <View style={styles.shadow}>
-          <ActivityIndicator size={'small'} />
+        <View style={styles.loading}>
+          <ActivityIndicator size={'large'} color={AppColors.yellow} />
         </View>
       )}
+      {modalVisible && <View style={styles.shadow} />}
       {modalVisible && (
         <BottomSheet
           ref={bottomSheetRef}
@@ -208,6 +148,17 @@ const styles = StyleSheet.create({
   darkBackground: {
     backgroundColor: AppColors.darkPrimary,
     paddingHorizontal: 23,
+  },
+  loading: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppColors.primary,
+    opacity: 0.7,
   },
 });
 
